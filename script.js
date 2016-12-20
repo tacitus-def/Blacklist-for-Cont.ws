@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.0
+// @version     2.1
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -12,6 +12,13 @@
 
 jQuery(function(){
   $(document).ready(function() {
+    var storage; 
+    if (typeof unsafeWindow != "undefined") {
+        storage = unsafeWindow.localStorage;
+    }
+    else {
+        storage = window.localStorage;
+    }
     var config = {
     	blackList: [ ]
     };
@@ -24,7 +31,7 @@ jQuery(function(){
       }
       var target = href.toLowerCase().replace(/^https?:\/\/|\/$/ig, '');
       var found = false;
-      
+
       if (! /^[0-9][a-zA-Z0-9]+\./.test(target)) {
         var min = 0;
         var max = config.blackList.length - 1;
@@ -46,7 +53,7 @@ jQuery(function(){
       else {
         found = true;
       }
-      
+
       if (found) {
           if (el.tagName == 'LI') {
             $(el).html('Комментарий удалён');
@@ -65,22 +72,22 @@ jQuery(function(){
           anchor.data('hasBlacklistBtn', 1);
       }
     }
-    
+
     function addToBlacklist(ev) {
       ev.preventDefault();
       var blog = $(this).data('blog');
       config.blackList.push(blog);
       config.blackList.sort();
-      unsafeWindow.localStorage.contBlackList = JSON.stringify(config.blackList);
+      storage.contBlackList = JSON.stringify(config.blackList);
       $(this).html(' [ Добавлен ] ');
-      
+
       triggerRemove();
     }
-    
+
     function eachElement(idx, el) {
       processElement(el);
     }
-    
+
     function removeBadAuthor() {
       $('.post_prv:has(".author-bar")').each(eachElement);
       $('.post_prv:has(".author-bar .post_card .media-body")').each(eachElement);
@@ -105,22 +112,22 @@ jQuery(function(){
         comments.addEventListener("DOMNodeInserted", function (ev) { processElement(ev.target); });
       }
     }
-    
-    var blackList = unsafeWindow.localStorage.contBlackList;
+
+    var blackList = storage.contBlackList;
     config.blackList = JSON.parse(blackList ? blackList : '[]');
 
     if (! config.blackList instanceof Array) {
        config.blackList = [ ];
     }
-    
+
     for (var i in config.blackList) {
       config.blackList[i] = config.blackList[i].toLowerCase();
     }
 
     config.blackList.sort();
-    
+
     setEvents();
     triggerRemove();
-    
+
   });
 });
