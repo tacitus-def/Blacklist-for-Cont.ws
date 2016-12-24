@@ -32,7 +32,7 @@ jQuery(function(){
       var target = href.toLowerCase().replace(/^https?:\/\/|\/$/ig, '');
       var found = false;
 
-      if (! /^[0-9][a-zA-Z0-9]+\./.test(target)) {
+      if (! /^[0-9][a-zA-Z0-9]{4,}\./.test(target)) {
         var min = 0;
         var max = config.blackList.length - 1;
 
