@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.3
+// @version     2.4
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -13,28 +13,22 @@
 jQuery(function(){
   $(document).ready(function() {
     var storage; 
-    if (typeof unsafeWindow != "undefined") {
+    if (typeof unsafeWindow !== "undefined") {
         storage = unsafeWindow.localStorage;
     }
     else {
         storage = window.localStorage;
     }
     var config = {
-    	blackList: [ ]
+    	blackList: [ ],
+        count: 1
     };
 
-    function processElement(el) {
-      var anchor = $(el).find('a[href$=".cont.ws"]:eq(0)');
-      var href = anchor.attr('href');
-      if (! href) {
-        return;
-      }
-      var target = href.toLowerCase().replace(/^https?:\/\/|\/$/ig, '');
-      var found = false;
-
+    function search(target) {
         var min = 0;
         var max = config.blackList.length - 1;
-
+        var found = -1;
+      
         while (min <= max) {
           var mid = Math.round((min + max) / 2);
           if (target < config.blackList[mid]) {
@@ -44,23 +38,41 @@ jQuery(function(){
             min = mid + 1;
           }
           else {
-            found = true;
+            found = mid;
             break;
           }
         }
+      
+        return found;
+    }
+    
+    function processElement(el) {
+      var anchor = $(el).find('a[href$=".cont.ws"]:eq(0)');
+      var href = anchor.attr('href');
+      var name = anchor.attr('title') || anchor.text();
+      if (! href) {
+        return;
+      }
+      var target = href.toLowerCase().replace(/^https?:\/\/|\/$/ig, '');
+      var found = search(target);
 
-      if (found) {
-          if (el.tagName == 'LI') {
-            $(el).html('Комментарий удалён');
+      if (found !== -1) {
+          config.count += 1;
+          if (el.tagName === 'LI') {
+            $(el).html('Комментарий <b>' + name + '</b> удалён [ <a id="_restore' + config.count + '" href="#" data-blog="' + target + '" data-name="' + name + '">восстановить</a> ]');
           }
           else {
-            $(el).remove();
+            $(el).html('Статья <b>' + name + '</b> удалена [ <a id="_restore' + config.count + '" href="#" data-blog="' + target + '" data-name="' + name + '">восстановить</a> ]');
+            //$(el).remove();
           }
+          $('#_restore' + config.count).click(deleteFromBlackList);
       }
-      if (! found && ! anchor.data('hasBlacklistBtn')) {
+      else
+      if (! anchor.data('hasBlacklistBtn')) {
           var btnBL = document.createElement("a");
           btnBL.innerHTML = ' [ В черный список ] ';
           btnBL.href='#';
+          $(btnBL).data('name', name);
           $(btnBL).data('blog', target);
           $(btnBL).click(addToBlacklist);
           anchor.after(btnBL);
@@ -68,15 +80,35 @@ jQuery(function(){
       }
     }
 
+    function deleteFromBlackList(ev) {
+      ev.preventDefault();
+      var blog = $(this).data('blog');
+      var name = $(this).data('name');
+      if (confirm("Вы действительно хотите удалить " + name + " из черного списка?")) {
+        var idx = search(blog);
+        var existing = (typeof config.blackList[idx] !== 'undefined');
+        if (idx !== -1 && existing) {
+          config.blackList.splice(idx, 1);
+          config.blackList.sort();
+          storage.contBlackList = JSON.stringify(config.blackList);
+          
+          window.location.reload(false); 
+        }
+      }
+    }
+    
     function addToBlacklist(ev) {
       ev.preventDefault();
       var blog = $(this).data('blog');
-      config.blackList.push(blog);
-      config.blackList.sort();
-      storage.contBlackList = JSON.stringify(config.blackList);
-      $(this).html(' [ Добавлен ] ');
+      var name = $(this).data('name');
+      if (confirm("Вы действительно хотите добавить " + name + " в черный список?")) {
+        config.blackList.push(blog);
+        config.blackList.sort();
+        storage.contBlackList = JSON.stringify(config.blackList);
+        $(this).html(' [ Добавлен ] ');
 
-      triggerRemove();
+        triggerRemove();
+      }
     }
 
     function eachElement(idx, el) {
