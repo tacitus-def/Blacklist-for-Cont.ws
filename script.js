@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.6.2
+// @version     2.6.3
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -21,7 +21,8 @@ jQuery(function(){
     }
     var config = {
     	blackList: [ ],
-        count: 1
+        count: 1,
+        settings: false
     };
 
     function search(target) {
@@ -90,8 +91,12 @@ jQuery(function(){
         if (idx !== -1 && existing) {
           config.blackList.splice(idx, 1);
           saveBlacklist();
-          
-          window.location.reload(false); 
+          if (config.settings) {
+            $(this).parents('li:eq(0)').remove();
+          }
+          else {
+            window.location.reload(false); 
+          }
         }
       }
     }
@@ -175,8 +180,8 @@ jQuery(function(){
     }
     
     loadBlacklist();
-    
-    if ($('.user_setting').length > 0) {
+    config.settings = $('.user_setting').length > 0;
+    if (config.settings) {
         blacklistSettings();
     }
     else {
