@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.5
+// @version     2.5.1
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -21,7 +21,8 @@ jQuery(function(){
     }
     var config = {
     	blackList: [ ],
-        count: 1
+      count: 1,
+      processed: [ ]
     };
 
     function search(target) {
@@ -62,8 +63,13 @@ jQuery(function(){
             $(el).html('Комментарий <a href="' + href + '"><b>' + name + '</b></a> удалён [ <a id="_restore' + config.count + '" href="#" data-blog="' + target + '" data-name="' + name + '">восстановить</a> ]');
           }
           else {
-            $(el).html('Статья <a href="' + href + '"><b>' + name + '</b></a> удалена [ <a id="_restore' + config.count + '" href="#" data-blog="' + target + '" data-name="' + name + '">восстановить</a> ]');
-            //$(el).remove();
+            if (typeof config.processed[found] === 'undefined') {
+              $(el).html('Статья <a href="' + href + '"><b>' + name + '</b></a> удалена [ <a id="_restore' + config.count + '" href="#" data-blog="' + target + '" data-name="' + name + '">восстановить</a> ]');
+              config.processed[found] = true;
+            }
+            else {
+              $(el).remove();
+            }
           }
           $('#_restore' + config.count).click(deleteFromBlackList);
       }
