@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.6.0
+// @version     2.6.1
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -167,7 +167,9 @@ jQuery(function(){
         $('ul[role="tablist"]').append('<li role="presentation"><a href="#hidden-users" aria-controls="blacklist" role="tab" data-toggle="tab">Скрытые пользователи</a></li>');
         $('.user_setting > div > .tab-content').append('<div role="tabpanel" class="tab-pane fade" id="hidden-users"><section><div class="jumbotron"><ul id="hidden-users-list"></ul></div></section></div>');
         for (var i in config.blackList) {
-          $('#hidden-users-list').append('<li><a href="https://' + config.blackList[i] + '">' + config.blackList[i] + '</a> <span class="pull-right">[ <a href="#" id="hiddenUser' + i + '">показать</a> ]</span></li>');
+          var target = config.blackList[i];
+          var name = target;
+          $('#hidden-users-list').append('<li><a href="https://' + target + '">' + target + '</a> <span class="pull-right">[ <a href="#" id="hiddenUser' + i + '" data-blog="' + target + '" data-name="' + name + '">показать</a> ]</span></li>');
           $('#hiddenUser' + i).click(deleteFromBlackList);
         }
     }
