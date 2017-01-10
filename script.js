@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.6.3
+// @version     2.7.0
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -48,13 +48,24 @@ jQuery(function(){
     }
     
     function processElement(el) {
-      var anchor = $(el).find('a[href$=".cont.ws"]:eq(0)');
+      var anchor = $(el)
+                    .find('> a[href], div:not([class *= "recm"]) > a[href]')
+                    .filter('[href$=".cont.ws"],[href^="/@"]')
+                    .filter(':eq(0)');
+      
       var href = anchor.attr('href');
       var name = anchor.attr('title') || anchor.text();
       if (! href) {
         return;
       }
-      var target = href.toLowerCase().replace(/^https?:\/\/|\/$/ig, '');
+      
+      var target = href.toLowerCase()
+      			.replace(/^https?:\/\/|\/$/ig, '')
+      			.replace(/^\/@|\.cont\.ws$/, '');
+      if (! target) {
+        return;
+      }
+      
       var found = search(target);
 
       if (found !== -1) {
@@ -162,7 +173,13 @@ jQuery(function(){
         }
 
         for (var i in config.blackList) {
-          config.blackList[i] = config.blackList[i].toLowerCase();
+          var item = config.blackList[i].toLowerCase();
+          if (item.match(/\.cont\.ws$/)) {
+	    config.blackList[i] = item.replace(/\.cont\.ws$/, '');
+          }
+          else {
+            config.blackList[i] = item;
+          }
         }
 
         config.blackList.sort();
