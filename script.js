@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.7.0
+// @version     2.7.1
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -191,7 +191,7 @@ jQuery(function(){
         for (var i in config.blackList) {
           var target = config.blackList[i];
           var name = target;
-          $('#hidden-users-list').append('<li><a href="https://' + target + '">' + target + '</a> <span class="pull-right">[ <a href="#" id="hiddenUser' + i + '" data-blog="' + target + '" data-name="' + name + '">показать</a> ]</span></li>');
+          $('#hidden-users-list').append('<li><a href="/@' + target + '">' + target + '</a> <span class="pull-right">[ <a href="#" id="hiddenUser' + i + '" data-blog="' + target + '" data-name="' + name + '">показать</a> ]</span></li>');
           $('#hiddenUser' + i).click(deleteFromBlackList);
         }
     }
