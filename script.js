@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.7.1
+// @version     2.7.2
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -12,30 +12,31 @@
 
 jQuery(function(){
   $(document).ready(function() {
-    var storage; 
+    let storage; 
     if (typeof unsafeWindow !== "undefined") {
         storage = unsafeWindow.localStorage;
     }
     else {
         storage = window.localStorage;
     }
-    var config = {
+    let config = {
     	blackList: [ ],
         count: 1,
         settings: false
     };
 
     function search(target) {
-        var min = 0;
-        var max = config.blackList.length - 1;
-        var found = -1;
+        let min = 0;
+        let max = config.blackList.length - 1;
+        let found = -1;
       
         while (min <= max) {
-          var mid = Math.round((min + max) / 2);
+          let mid = Math.round((min + max) / 2);
           if (target < config.blackList[mid]) {
             max = mid - 1;
           }
-          else if (target > config.blackList[mid]) {
+          else
+          if (target > config.blackList[mid]) {
             min = mid + 1;
           }
           else {
@@ -48,25 +49,25 @@ jQuery(function(){
     }
     
     function processElement(el) {
-      var anchor = $(el)
+      let anchor = $(el)
                     .find('> a[href], div:not([class *= "recm"]) > a[href]')
                     .filter('[href$=".cont.ws"],[href^="/@"]')
                     .filter(':eq(0)');
       
-      var href = anchor.attr('href');
-      var name = anchor.attr('title') || anchor.text();
+      let href = anchor.attr('href');
+      let name = anchor.attr('title') || anchor.text();
       if (! href) {
         return;
       }
       
-      var target = href.toLowerCase()
+      let target = href.toLowerCase()
       			.replace(/^https?:\/\/|\/$/ig, '')
       			.replace(/^\/@|\.cont\.ws$/, '');
       if (! target) {
         return;
       }
       
-      var found = search(target);
+      let found = search(target);
 
       if (found !== -1) {
           config.count += 1;
@@ -81,7 +82,7 @@ jQuery(function(){
       }
       else
       if (! anchor.data('hasBlacklistBtn')) {
-          var btnBL = document.createElement("a");
+          let btnBL = document.createElement("a");
           btnBL.innerHTML = ' [ Скрыть ] ';
           btnBL.href='#';
           $(btnBL).data('name', name);
@@ -94,11 +95,11 @@ jQuery(function(){
 
     function deleteFromBlackList(ev) {
       ev.preventDefault();
-      var blog = $(this).data('blog');
-      var name = $(this).data('name');
+      let blog = $(this).data('blog');
+      let name = $(this).data('name');
       if (confirm("Вы действительно хотите снова увидеть статьи и комментарии " + name + "?")) {
-        var idx = search(blog);
-        var existing = (typeof config.blackList[idx] !== 'undefined');
+        let idx = search(blog);
+        let existing = (typeof config.blackList[idx] !== 'undefined');
         if (idx !== -1 && existing) {
           config.blackList.splice(idx, 1);
           saveBlacklist();
@@ -114,28 +115,26 @@ jQuery(function(){
     
     function addToBlacklist(ev) {
       ev.preventDefault();
-      var blog = $(this).data('blog');
-      var name = $(this).data('name');
+      let blog = $(this).data('blog');
+      let name = $(this).data('name');
       if (confirm("Вы действительно хотите скрыть статьи и комментарии " + name + "?")) {
         config.blackList.push(blog);
         saveBlacklist();
-        $(this).html(' [ Скрыт ] ');
 
         triggerExorcism();
       }
     }
 
-    function eachElement(idx, el) {
-      processElement(el);
-    }
-
     function removeBadAuthor() {
-      $('.post_prv:has(".author-bar")').each(eachElement);
-      $('.post_prv:has(".author-bar .post_card .media-body")').each(eachElement);
+      $('.post_prv:has(".author-bar")')
+        .each( (idx, el) => processElement(el) );
+      $('.post_prv:has(".author-bar .post_card .media-body")')
+        .each( (idx, el) => processElement(el) );
     }
 
     function removeBadComment() {
-      $('.comments li:has("> a")').each(eachElement);
+      $('.comments li:has("> a")')
+        .each( (idx, el) => processElement(el) );
     }
 
     function triggerExorcism() {
@@ -144,13 +143,13 @@ jQuery(function(){
     }
 
     function setInquisitionEvents() {
-      var posts = document.querySelector('.content > .post');
+      let posts = document.querySelector('.content > .post');
       if (posts) {
-        posts.addEventListener("DOMNodeInserted", function (ev) { processElement(ev.target); });
+        posts.addEventListener("DOMNodeInserted", (ev) => processElement(ev.target) );
       }
-      var comments = document.querySelector('.comments');
+      let comments = document.querySelector('.comments');
       if (comments) {
-        comments.addEventListener("DOMNodeInserted", function (ev) { processElement(ev.target); });
+        comments.addEventListener("DOMNodeInserted", (ev) => processElement(ev.target) );
       }
     }
 
@@ -173,24 +172,24 @@ jQuery(function(){
         }
 
         for (var i in config.blackList) {
-          var item = config.blackList[i].toLowerCase();
+          let item = config.blackList[i].toLowerCase();
           if (item.match(/\.cont\.ws$/)) {
-	    config.blackList[i] = item.replace(/\.cont\.ws$/, '');
+	          config.blackList[i] = item.replace(/\.cont\.ws$/, '');
           }
           else {
             config.blackList[i] = item;
           }
         }
 
-        config.blackList.sort();
+        // config.blackList.sort();
     }
     
     function blacklistSettings() {
         $('ul[role="tablist"]').append('<li role="presentation"><a href="#hidden-users" aria-controls="blacklist" role="tab" data-toggle="tab">Скрытые пользователи</a></li>');
         $('.user_setting > div > .tab-content').append('<div role="tabpanel" class="tab-pane fade" id="hidden-users"><section><div class="jumbotron"><ol id="hidden-users-list"></ol></div></section></div>');
-        for (var i in config.blackList) {
-          var target = config.blackList[i];
-          var name = target;
+        for (let i in config.blackList) {
+          let target = config.blackList[i];
+          let name = target;
           $('#hidden-users-list').append('<li><a href="/@' + target + '">' + target + '</a> <span class="pull-right">[ <a href="#" id="hiddenUser' + i + '" data-blog="' + target + '" data-name="' + name + '">показать</a> ]</span></li>');
           $('#hiddenUser' + i).click(deleteFromBlackList);
         }
@@ -199,10 +198,10 @@ jQuery(function(){
     loadBlacklist();
     config.settings = $('.user_setting').length > 0;
     if (config.settings) {
-        blacklistSettings();
+      blacklistSettings();
     }
     else {
-        callInquisition();
+      callInquisition();
     }
   });
 });
