@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.7.2
+// @version     2.7.3
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -51,7 +51,7 @@ jQuery(function(){
     function processElement(el) {
       let anchor = $(el)
                     .find('> a[href], div:not([class *= "recm"]) > a[href]')
-                    .filter('[href$=".cont.ws"],[href^="/@"]')
+                    .filter('[href$=".cont.ws"],[href^="/@"],[href^="https://cont.ws/@"],[href^="http://cont.ws/@"]')
                     .filter(':eq(0)');
       
       let href = anchor.attr('href');
@@ -62,7 +62,7 @@ jQuery(function(){
       
       let target = href.toLowerCase()
       			.replace(/^https?:\/\/|\/$/ig, '')
-      			.replace(/^\/@|\.cont\.ws$/, '');
+      			.replace(/^\/@|\.cont\.ws$|^cont\.ws\/@/g, '');
       if (! target) {
         return;
       }
