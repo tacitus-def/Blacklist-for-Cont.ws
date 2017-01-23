@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.7.3
+// @version     2.7.4
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -195,6 +195,11 @@ jQuery(function(){
         }
     }
     
+    function removePromoBar() {
+      $('.content div.post_toolbar.post_toolbar__promo').remove();
+    }
+    
+    removePromoBar();
     loadBlacklist();
     config.settings = $('.user_setting').length > 0;
     if (config.settings) {
