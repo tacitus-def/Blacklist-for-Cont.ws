@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.7.4
+// @version     2.7.5
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
 // @include     https://cont.ws
 // @include     https://cont.ws/*
 // @grant       none
+// @updateURL   https://openuserjs.org/meta/tacitus-def/Blacklist_for_Cont.ws.meta.js
 // ==/UserScript==
 
 jQuery(function(){
