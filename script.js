@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.8.0
+// @version     2.8.1
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -34,7 +34,7 @@ jQuery(function(){
       
         while (min <= max) {
           let mid = Math.round((min + max) / 2);
-          let ret = typeof cb == "function" ? cb (target, arr[mid]) : target.localeCompare(arr[mid]);
+          let ret = cb (target, arr[mid]);
           if (ret < 0) {
             max = mid - 1;
           }
@@ -70,7 +70,7 @@ jQuery(function(){
         return;
       }
       
-      let found = search(target, config.blackList);
+      let found = search(target, config.blackList, (a, b) => a.localeCompare(b));
 
       if (found !== -1) {
           config.count += 1;
@@ -112,7 +112,7 @@ jQuery(function(){
       let blog = $(this).data('blog');
       let name = $(this).data('name');
       if (confirm("Вы действительно хотите снова увидеть статьи и комментарии " + name + "?")) {
-        let idx = search(blog, config.blackList);
+        let idx = search(blog, config.blackList, (a, b) => a.localeCompare(b));
         let idxName = search(blog, config.blackListName, (a, b) => a.localeCompare(b.blog));
         if (idxName !== -1) {
           config.blackListName.splice(idxName, 1);
