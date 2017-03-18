@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.8.1
+// @version     2.8.2
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -23,6 +23,7 @@ jQuery(function(){
     let config = {
     	  blackList: [ ],
         blackListNames: [ ],
+        blackListMapped: [ ],
         count: 1,
         settings: false
     };
@@ -100,11 +101,15 @@ jQuery(function(){
       let author = $(el).find("div.author-bar");
       if (author.length > 0) {
         let name = author.text().trim().replace(/\s+\d+$/, '');
-        let idxName = search(name, config.blackListName, (a, b) => a.localeCompare(b.name));
+        let idxName = search(name, config.blackListName, (a, b) => a.localeCompare(b.name, "ru"));
         if (idxName !== -1) {
           $(el).remove();
         }
       }
+    }
+    
+    function mappingBlackListName() {
+      config.blackListMapped = config.blackListName.map(( { blog }) => blog );
     }
     
     function deleteFromBlackList(ev) {
@@ -113,9 +118,10 @@ jQuery(function(){
       let name = $(this).data('name');
       if (confirm("Вы действительно хотите снова увидеть статьи и комментарии " + name + "?")) {
         let idx = search(blog, config.blackList, (a, b) => a.localeCompare(b));
-        let idxName = search(blog, config.blackListName, (a, b) => a.localeCompare(b.blog));
+        let idxName = config.blackListMapped.indexOf(blog);
         if (idxName !== -1) {
           config.blackListName.splice(idxName, 1);
+          mappingBlackListName();
         }
         if (idx !== -1) {
           config.blackList.splice(idx, 1);
@@ -137,6 +143,7 @@ jQuery(function(){
       if (confirm("Вы действительно хотите скрыть статьи и комментарии " + name + "?")) {
         config.blackList.push(blog);
         config.blackListName.push({ blog: blog, name: name });
+        mappingBlackListName();
         saveBlacklist();
 
         triggerExorcism();
@@ -182,7 +189,7 @@ jQuery(function(){
     
     function saveBlacklist() {
         config.blackList.sort();
-        config.blackListName.sort((a, b) => a.name.localeCompare(b.name));
+        config.blackListName.sort((a, b) => a.name.localeCompare(b.name, "ru"));
         storage.contBlackList = JSON.stringify(config.blackList);
         storage.contBlackListName = JSON.stringify(config.blackListName);
     }
@@ -199,7 +206,7 @@ jQuery(function(){
         // ---- BlackListName ----
         var blackListName = storage.contBlackListName;
         config.blackListName = JSON.parse(blackListName ? blackListName : '[]');
-
+        mappingBlackListName();
         if (! config.blackListName instanceof Array) {
            config.blackListName = [ ];
         }
@@ -220,7 +227,7 @@ jQuery(function(){
         $('.user_setting > div > .tab-content').append('<div role="tabpanel" class="tab-pane fade" id="hidden-users"><section><div class="jumbotron"><ol id="hidden-users-list"></ol></div></section></div>');
         for (let i in config.blackList) {
           let target = config.blackList[i];
-          let idxName = search(target, config.blackListName, (a, b) => a.localeCompare(b.blog));
+          let idxName = config.blackListMapped.indexOf(target);
           let name = idxName !== -1 ? config.blackListName[idxName].name : target;
           $('#hidden-users-list').append('<li><a href="/@' + target + '">' + name + '</a> <span class="pull-right">[ <a href="#" id="hiddenUser' + i + '" data-blog="' + target + '" data-name="' + name + '">показать</a> ]</span></li>');
           $('#hiddenUser' + i).click(deleteFromBlackList);
