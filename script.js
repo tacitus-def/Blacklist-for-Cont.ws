@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.7.5
+// @version     2.8.0
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -21,23 +21,25 @@ jQuery(function(){
         storage = window.localStorage;
     }
     let config = {
-    	blackList: [ ],
+    	  blackList: [ ],
+        blackListNames: [ ],
         count: 1,
         settings: false
     };
 
-    function search(target) {
+    function search(target, arr, cb) {
         let min = 0;
-        let max = config.blackList.length - 1;
+        let max = arr.length - 1;
         let found = -1;
       
         while (min <= max) {
           let mid = Math.round((min + max) / 2);
-          if (target < config.blackList[mid]) {
+          let ret = typeof cb == "function" ? cb (target, arr[mid]) : target.localeCompare(arr[mid]);
+          if (ret < 0) {
             max = mid - 1;
           }
           else
-          if (target > config.blackList[mid]) {
+          if (ret > 0) {
             min = mid + 1;
           }
           else {
@@ -68,7 +70,7 @@ jQuery(function(){
         return;
       }
       
-      let found = search(target);
+      let found = search(target, config.blackList);
 
       if (found !== -1) {
           config.count += 1;
@@ -86,7 +88,7 @@ jQuery(function(){
           let btnBL = document.createElement("a");
           btnBL.innerHTML = ' [ Скрыть ] ';
           btnBL.href='#';
-          $(btnBL).data('name', name);
+          $(btnBL).data('name', name.trim());
           $(btnBL).data('blog', target);
           $(btnBL).click(addToBlacklist);
           anchor.after(btnBL);
@@ -94,14 +96,28 @@ jQuery(function(){
       }
     }
 
+    function processElementByName(el) {
+      let author = $(el).find("div.author-bar");
+      if (author.length > 0) {
+        let name = author.text().trim().replace(/\s+\d+$/, '');
+        let idxName = search(name, config.blackListName, (a, b) => a.localeCompare(b.name));
+        if (idxName !== -1) {
+          $(el).remove();
+        }
+      }
+    }
+    
     function deleteFromBlackList(ev) {
       ev.preventDefault();
       let blog = $(this).data('blog');
       let name = $(this).data('name');
       if (confirm("Вы действительно хотите снова увидеть статьи и комментарии " + name + "?")) {
-        let idx = search(blog);
-        let existing = (typeof config.blackList[idx] !== 'undefined');
-        if (idx !== -1 && existing) {
+        let idx = search(blog, config.blackList);
+        let idxName = search(blog, config.blackListName, (a, b) => a.localeCompare(b.blog));
+        if (idxName !== -1) {
+          config.blackListName.splice(idxName, 1);
+        }
+        if (idx !== -1) {
           config.blackList.splice(idx, 1);
           saveBlacklist();
           if (config.settings) {
@@ -120,6 +136,7 @@ jQuery(function(){
       let name = $(this).data('name');
       if (confirm("Вы действительно хотите скрыть статьи и комментарии " + name + "?")) {
         config.blackList.push(blog);
+        config.blackListName.push({ blog: blog, name: name });
         saveBlacklist();
 
         triggerExorcism();
@@ -132,7 +149,10 @@ jQuery(function(){
       $('.post_prv:has(".author-bar .post_card .media-body")')
         .each( (idx, el) => processElement(el) );
     }
-
+    function removeBadAuthorName() {
+      $("div.sidebar div.post_prv2")
+        .each( (idx, el) => processElementByName(el) );
+    }
     function removeBadComment() {
       $('.comments li:has("> a")')
         .each( (idx, el) => processElement(el) );
@@ -140,17 +160,18 @@ jQuery(function(){
 
     function triggerExorcism() {
       removeBadAuthor();
+      removeBadAuthorName();
       removeBadComment();
     }
 
     function setInquisitionEvents() {
       let posts = document.querySelector('.content > .post');
       if (posts) {
-        posts.addEventListener("DOMNodeInserted", (ev) => processElement(ev.target) );
+        posts.addEventListener("DOMNodeInserted", ({ target }) => processElement(target) );
       }
       let comments = document.querySelector('.comments');
       if (comments) {
-        comments.addEventListener("DOMNodeInserted", (ev) => processElement(ev.target) );
+        comments.addEventListener("DOMNodeInserted", ({ target }) => processElement(target) );
       }
     }
 
@@ -161,17 +182,28 @@ jQuery(function(){
     
     function saveBlacklist() {
         config.blackList.sort();
+        config.blackListName.sort((a, b) => a.name.localeCompare(b.name));
         storage.contBlackList = JSON.stringify(config.blackList);
+        storage.contBlackListName = JSON.stringify(config.blackListName);
     }
     
     function loadBlacklist() {
+        // ---- BlackList ----
         var blackList = storage.contBlackList;
         config.blackList = JSON.parse(blackList ? blackList : '[]');
 
         if (! config.blackList instanceof Array) {
            config.blackList = [ ];
         }
+        // ---- /BlackList ----
+        // ---- BlackListName ----
+        var blackListName = storage.contBlackListName;
+        config.blackListName = JSON.parse(blackListName ? blackListName : '[]');
 
+        if (! config.blackListName instanceof Array) {
+           config.blackListName = [ ];
+        }
+        // ---- /BlackListName ----
         for (var i in config.blackList) {
           let item = config.blackList[i].toLowerCase();
           if (item.match(/\.cont\.ws$/)) {
@@ -181,8 +213,6 @@ jQuery(function(){
             config.blackList[i] = item;
           }
         }
-
-        // config.blackList.sort();
     }
     
     function blacklistSettings() {
@@ -190,8 +220,9 @@ jQuery(function(){
         $('.user_setting > div > .tab-content').append('<div role="tabpanel" class="tab-pane fade" id="hidden-users"><section><div class="jumbotron"><ol id="hidden-users-list"></ol></div></section></div>');
         for (let i in config.blackList) {
           let target = config.blackList[i];
-          let name = target;
-          $('#hidden-users-list').append('<li><a href="/@' + target + '">' + target + '</a> <span class="pull-right">[ <a href="#" id="hiddenUser' + i + '" data-blog="' + target + '" data-name="' + name + '">показать</a> ]</span></li>');
+          let idxName = search(target, config.blackListName, (a, b) => a.localeCompare(b.blog));
+          let name = idxName !== -1 ? config.blackListName[idxName].name : target;
+          $('#hidden-users-list').append('<li><a href="/@' + target + '">' + name + '</a> <span class="pull-right">[ <a href="#" id="hiddenUser' + i + '" data-blog="' + target + '" data-name="' + name + '">показать</a> ]</span></li>');
           $('#hiddenUser' + i).click(deleteFromBlackList);
         }
     }
