@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.8.2
+// @version     2.8.3
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -101,7 +101,7 @@ jQuery(function(){
       let author = $(el).find("div.author-bar");
       if (author.length > 0) {
         let name = author.text().trim().replace(/\s+\d+$/, '');
-        let idxName = search(name, config.blackListName, (a, b) => a.localeCompare(b.name, "ru"));
+        let idxName = search(name, config.blackListName, (a, b) => a.localeCompare(b.name));
         if (idxName !== -1) {
           $(el).remove();
         }
@@ -172,7 +172,7 @@ jQuery(function(){
     }
 
     function setInquisitionEvents() {
-      let posts = document.querySelector('.content > .post');
+      let posts = document.querySelector('.content > .post, .content #more');
       if (posts) {
         posts.addEventListener("DOMNodeInserted", ({ target }) => processElement(target) );
       }
@@ -189,7 +189,7 @@ jQuery(function(){
     
     function saveBlacklist() {
         config.blackList.sort();
-        config.blackListName.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+        config.blackListName.sort((a, b) => a.name.localeCompare(b.name));
         storage.contBlackList = JSON.stringify(config.blackList);
         storage.contBlackListName = JSON.stringify(config.blackListName);
     }
