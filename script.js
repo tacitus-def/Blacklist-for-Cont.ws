@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Blacklist for Cont.ws
 // @namespace   cont.ws
-// @version     2.8.3
+// @version     2.8.5
 // @author      Demiurg <spetr@bk.ru>
 // @license     GNU General Public License v3
 // @description Чистит ленту Cont.ws от упоротых авторов.
@@ -157,7 +157,7 @@ jQuery(function(){
         .each( (idx, el) => processElement(el) );
     }
     function removeBadAuthorName() {
-      $("div.sidebar div.post_prv2")
+      $('div.sidebar > div.post_prv2:has(".author-bar")')
         .each( (idx, el) => processElementByName(el) );
     }
     function removeBadComment() {
@@ -172,6 +172,10 @@ jQuery(function(){
     }
 
     function setInquisitionEvents() {
+      let posts_container = document.querySelector('.content > #posts_container');
+      if (posts_container) {
+        posts_container.addEventListener("DOMNodeInserted", ({ target }) => processElement(target) );
+      }
       let posts = document.querySelector('.content > .post, .content #more');
       if (posts) {
         posts.addEventListener("DOMNodeInserted", ({ target }) => processElement(target) );
@@ -196,7 +200,7 @@ jQuery(function(){
     
     function loadBlacklist() {
         // ---- BlackList ----
-        var blackList = storage.contBlackList;
+        let blackList = storage.contBlackList;
         config.blackList = JSON.parse(blackList ? blackList : '[]');
 
         if (! config.blackList instanceof Array) {
@@ -204,14 +208,14 @@ jQuery(function(){
         }
         // ---- /BlackList ----
         // ---- BlackListName ----
-        var blackListName = storage.contBlackListName;
+        let blackListName = storage.contBlackListName;
         config.blackListName = JSON.parse(blackListName ? blackListName : '[]');
         mappingBlackListName();
         if (! config.blackListName instanceof Array) {
            config.blackListName = [ ];
         }
         // ---- /BlackListName ----
-        for (var i in config.blackList) {
+        for (let i in config.blackList) {
           let item = config.blackList[i].toLowerCase();
           if (item.match(/\.cont\.ws$/)) {
 	          config.blackList[i] = item.replace(/\.cont\.ws$/, '');
